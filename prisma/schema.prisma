@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// model User {
+//   id        Int      @id @default(autoincrement())
+//   email     String   @unique
+//   username  String   @unique
+//   password  String
+//   createdAt DateTime @default(now())
+//   updateAt  DateTime @updatedAt
+// }
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String?   @unique
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  tweets        Tweet[]
+  comments      Comment[]
+  likes         Like[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Tweet {
+  tweet_id     Int       @id @default(autoincrement())
+  isi_tweet    String
+  create_tweet DateTime  @default(now())
+  user_id      String
+  user         User      @relation(fields: [user_id], references: [id])
+  likes        Like[]
+  comments     Comment[]
+}
+
+model Like {
+  like_id  Int    @id @default(autoincrement())
+  user     User   @relation(fields: [user_id], references: [id])
+  user_id  String
+  tweet_id Int
+  tweet    Tweet  @relation(fields: [tweet_id], references: [tweet_id])
+}
+
+model Comment {
+  comment_id     Int      @id @default(autoincrement())
+  comment        String
+  create_comment DateTime @default(now())
+  user           User     @relation(fields: [user_id], references: [id])
+  user_id        String
+  tweet          Tweet    @relation(fields: [tweet_id], references: [tweet_id])
+  tweet_id       Int
+}
